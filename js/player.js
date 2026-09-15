@@ -21,6 +21,7 @@ export class Player {
     this.carryWeight = 0;
     this.fallSpeed = 0; this.airTime = 0;
     this.keys = {}; this.mouse = { dx: 0, dy: 0 };
+    this.embeddedPointer = { x: null, y: null };
     // Google Apps Script serves pages inside a sandbox that does not grant Pointer Lock.
     // The hosted game adds ?embed=1 there, so keep controls usable with ordinary mouse
     // movement and the arrow keys while leaving normal browser play unchanged.
@@ -46,10 +47,33 @@ export class Player {
       if (this.locked && this.inputEnabled) { this.game.onKey(e.code, true); if (['Space', 'KeyE', 'KeyG', 'KeyF', 'KeyQ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); }
     });
     addEventListener('keyup', e => { this.keys[e.code] = false; this.game.onKey(e.code, false); });
-    addEventListener('blur', () => { this.keys = {}; });
+    addEventListener('blur', () => {
+      this.keys = {};
+      this.embeddedPointer.x = this.embeddedPointer.y = null;
+      this.mouse.dx = this.mouse.dy = 0;
+    });
     addEventListener('mousemove', e => {
       if (!this.locked || (!this.embedded && document.pointerLockElement !== c)) return;
-      this.mouse.dx += e.movementX; this.mouse.dy += e.movementY;
+      if (this.embedded) {
+        const previousX = this.embeddedPointer.x;
+        const previousY = this.embeddedPointer.y;
+        this.embeddedPointer.x = e.clientX;
+        this.embeddedPointer.y = e.clientY;
+        if (previousX == null || previousY == null) return;
+
+        // A sandboxed Apps Script page cannot use real Pointer Lock. At a screen
+        // edge Chrome may report movementX even though the cursor did not move,
+        // which made the camera drift. Only visible coordinate changes count here.
+        this.mouse.dx += e.clientX - previousX;
+        this.mouse.dy += e.clientY - previousY;
+        return;
+      }
+      this.mouse.dx += e.movementX;
+      this.mouse.dy += e.movementY;
+    });
+    addEventListener('mouseleave', () => {
+      this.embeddedPointer.x = this.embeddedPointer.y = null;
+      if (this.embedded) this.mouse.dx = this.mouse.dy = 0;
     });
     addEventListener('mousedown', e => { if (this.locked && this.inputEnabled) this.game.onMouse(e.button, true); });
     addEventListener('mouseup', e => { if (this.locked) this.game.onMouse(e.button, false); });
@@ -65,6 +89,8 @@ export class Player {
     this.game.wantsLock = true;
     if (this.embedded) {
       this.locked = true;
+      this.embeddedPointer.x = this.embeddedPointer.y = null;
+      this.mouse.dx = this.mouse.dy = 0;
       this.game.renderer.domElement.style.cursor = 'none';
       this.game.renderer.domElement.focus(); this.game.onLockChange(true); return;
     }
@@ -75,6 +101,7 @@ export class Player {
     if (this.embedded) {
       if (!this.locked) return;
       this.locked = false; this.mouse.dx = this.mouse.dy = 0;
+      this.embeddedPointer.x = this.embeddedPointer.y = null;
       this.game.renderer.domElement.style.cursor = 'auto';
       this.game.onLockChange(false); return;
     }
