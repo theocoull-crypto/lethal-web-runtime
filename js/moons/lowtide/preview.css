@@ -1,0 +1,119 @@
+:root {
+  color-scheme: dark;
+  --amber: #e7b44b;
+  --pale: #d6ddce;
+  --panel: rgba(12, 17, 16, .87);
+  --line: rgba(192, 208, 191, .35);
+  font-family: "Courier New", Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #101614; color: var(--pale); }
+button { font: inherit; }
+#lowtide-canvas { display: block; width: 100%; height: 100%; }
+
+#lowtide-vignette,
+#lowtide-grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 4;
+}
+#lowtide-vignette { box-shadow: inset 0 0 15vw 4vw rgba(0, 0, 0, .57); }
+#lowtide-grain {
+  opacity: .11;
+  background-image: repeating-radial-gradient(circle at 17% 32%, transparent 0, rgba(255,255,255,.28) .5px, transparent 1px, transparent 3px);
+  background-size: 5px 5px;
+  mix-blend-mode: overlay;
+}
+#lowtide-crosshair {
+  position: fixed; left: 50%; top: 50%; z-index: 8; width: 5px; height: 5px;
+  transform: translate(-50%, -50%); border: 1px solid rgba(230, 236, 220, .66); border-radius: 50%; pointer-events: none;
+}
+
+#lowtide-header {
+  position: fixed; z-index: 8; top: 22px; left: 26px; padding-left: 11px;
+  border-left: 3px solid var(--amber); text-shadow: 0 2px 5px #000; pointer-events: none;
+}
+.designation { font-size: 23px; letter-spacing: .12em; font-weight: 800; }
+.prototype { margin-top: 3px; color: #aeb7ab; font-size: 10px; letter-spacing: .13em; }
+
+#lowtide-clock {
+  position: fixed; z-index: 8; top: 21px; right: 25px; min-width: 142px; padding: 8px 10px;
+  border: 1px solid var(--line); background: var(--panel); text-align: center; pointer-events: none;
+}
+#clock-time { font-size: 20px; font-weight: 800; }
+#clock-rate { margin-left: 8px; color: var(--amber); font-size: 11px; }
+
+#lowtide-status {
+  position: fixed; z-index: 8; bottom: 22px; left: 25px; display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 1px; border: 1px solid var(--line); background: rgba(194, 214, 195, .2); pointer-events: none;
+}
+#lowtide-status div { min-width: 145px; padding: 7px 10px; background: var(--panel); }
+#lowtide-status span { display: block; color: #95a397; font-size: 9px; letter-spacing: .15em; }
+#lowtide-status strong { display: block; margin-top: 2px; color: #e8eee3; font-size: 13px; }
+
+#lowtide-debug {
+  position: fixed; z-index: 15; top: 77px; right: 25px; width: 300px; border: 1px solid var(--line); background: var(--panel);
+  box-shadow: 0 13px 35px rgba(0,0,0,.4);
+}
+#debug-collapse { width: 100%; padding: 8px 10px; border: 0; border-bottom: 1px solid var(--line); color: var(--amber); background: rgba(255,255,255,.035); text-align: left; letter-spacing: .09em; cursor: pointer; }
+#debug-collapse::after { content: "−"; float: right; }
+#lowtide-debug.collapsed #debug-collapse::after { content: "+"; }
+#lowtide-debug.collapsed #debug-body { display: none; }
+#debug-body { padding: 10px; }
+.debug-label { margin: 10px 1px 5px; color: #91a095; font-size: 9px; letter-spacing: .13em; }
+.debug-row { display: grid; gap: 4px; }
+.debug-row.two { grid-template-columns: repeat(2, 1fr); }
+.debug-row.states { grid-template-columns: repeat(3, 1fr); }
+.debug-row button,
+#enter-preview {
+  min-height: 30px; padding: 5px 6px; border: 1px solid rgba(210,225,210,.25); color: #dbe2d6; background: rgba(90,110,97,.18); font-size: 9px; cursor: pointer;
+}
+.debug-row button:hover, .debug-row button.active, #enter-preview:hover:not(:disabled) { border-color: var(--amber); color: var(--amber); background: rgba(231,180,75,.12); }
+.debug-row button:focus-visible, #enter-preview:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+#perf-stats { margin: 9px 0 0; padding: 7px; color: #93b99a; background: rgba(0,0,0,.32); font-size: 10px; line-height: 1.45; }
+
+#lowtide-notice {
+  position: fixed; z-index: 10; left: 50%; top: 25%; max-width: min(660px, 80vw); transform: translateX(-50%);
+  padding: 11px 20px; color: #f4e7bf; background: rgba(37, 24, 17, .88); border: 1px solid rgba(231,180,75,.55);
+  font-weight: 800; letter-spacing: .08em; text-align: center; opacity: 0; transition: opacity .25s; pointer-events: none;
+}
+#lowtide-notice.visible { opacity: 1; }
+#lowtide-context {
+  position: fixed; z-index: 8; left: 50%; bottom: 12%; transform: translateX(-50%); padding: 6px 10px;
+  color: #d9dfd5; background: rgba(0,0,0,.54); font-size: 12px; opacity: 0; pointer-events: none;
+}
+#lowtide-context.visible { opacity: 1; }
+
+#lowtide-loading {
+  position: fixed; z-index: 30; inset: 0; display: grid; place-items: center;
+  background: radial-gradient(circle at center, rgba(52,65,61,.5), rgba(4,7,7,.97) 67%);
+}
+#lowtide-loading.hidden { display: none; }
+.loading-card { width: min(560px, calc(100vw - 40px)); padding: 30px; border: 1px solid rgba(211,225,210,.35); background: rgba(9,14,13,.92); box-shadow: 0 30px 80px #000; }
+.loading-kicker { color: #93a197; font-size: 10px; letter-spacing: .15em; }
+.loading-card h1 { margin: 9px 0 6px; color: #e3eadd; font-size: clamp(30px, 6vw, 54px); letter-spacing: .08em; }
+.loading-rule { height: 2px; background: linear-gradient(90deg, var(--amber), transparent); }
+#loading-text { min-height: 20px; color: #b6c1b5; font-size: 12px; }
+.loading-bar { height: 5px; margin: 18px 0; background: #1e2824; overflow: hidden; }
+.loading-bar i { display: block; width: 6%; height: 100%; background: var(--amber); transition: width .25s; }
+#enter-preview { width: 100%; min-height: 40px; border-color: rgba(231,180,75,.55); font-size: 13px; letter-spacing: .1em; }
+#enter-preview:disabled { opacity: .35; cursor: wait; }
+.controls { margin: 16px 0 0; color: #839087; font-size: 10px; line-height: 1.6; text-align: center; }
+
+body.tide-warning #lowtide-vignette { box-shadow: inset 0 0 15vw 4vw rgba(84, 30, 8, .5); }
+body.hazard #lowtide-vignette { box-shadow: inset 0 0 22vw 8vw rgba(114, 15, 10, .78); }
+body.capture-clean #lowtide-debug,
+body.capture-clean #lowtide-status,
+body.capture-clean #lowtide-clock,
+body.capture-clean #lowtide-context,
+body.capture-clean #lowtide-notice,
+body.capture-clean #lowtide-crosshair { display: none; }
+body.capture-clean #lowtide-header { opacity: .72; }
+
+@media (max-width: 720px) {
+  #lowtide-debug { width: 260px; right: 10px; top: 70px; }
+  #lowtide-header { left: 12px; top: 13px; }
+  .designation { font-size: 18px; }
+  #lowtide-clock { top: 12px; right: 10px; }
+  #lowtide-status { left: 10px; bottom: 10px; }
+  #lowtide-status div { min-width: 112px; }
+}
